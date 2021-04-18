@@ -1,2 +1,2 @@
-# trustfi-alpha-ido-protocol
+# TrustFi-Alpha-IDO-Protocol
 TrustFi Alpha IDO Protocol
