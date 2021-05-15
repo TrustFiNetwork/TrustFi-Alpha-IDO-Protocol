@@ -95,9 +95,9 @@ contract trustPair is ItrustPair{
     
     //address public WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     //address public USDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
-    address public WETH = address(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
+    address public constant WETH = address(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
     //address public USDT = address(0x7D7574cF25A061c2a98444a49C544c4c5C3Cad6A);
-    address public USDT = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
+    address public constant USDT = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
     bytes4 private constant TRANSFERRROM = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
@@ -196,6 +196,7 @@ contract trustPair is ItrustPair{
         uint256 amount;
         if(tokenReceive == WETH){
             //eth
+            require(_amount = msg.value, "trutfiPair: msg.value is not equals to _amount");
             amount = msg.value;
         }else{
             // usdt or other coin
@@ -215,11 +216,10 @@ contract trustPair is ItrustPair{
         
         
         buyAmount = amount.mul(rate);
-        
-        if(saleAmount < totalSale +  buyAmount ){
+
+        if(saleAmount < totalSale + buyAmount ){
             uint256 canBuy = saleAmount.sub(totalSale);
-            uint256 totalbuyAmount = amount;
-            leftBuyAmount =amount.sub(totalbuyAmount.mul(recDecimals).div(rate));
+            leftBuyAmount = amount.sub(canBuy.div(rate));
             buyAmount = canBuy;
             amount = amount.sub(leftBuyAmount);
             if(tokenReceive == WETH){
@@ -227,9 +227,8 @@ contract trustPair is ItrustPair{
             }else{
                 _safeTransfer(tokenReceive,msg.sender,leftBuyAmount);
             }
-            
         }
-        
+
         totalSale = totalSale.add(buyAmount);
         totalReceive  = totalReceive.add(amount);
         
@@ -244,8 +243,8 @@ contract trustPair is ItrustPair{
                 _safeTransfer(tokenSale,parentAddr,parentAmount);
             }
         }
-        _safeTransfer(tokenSale,msg.sender,buyAmount);
         plyBuy[msg.sender] = plyBuy[msg.sender].add(buyAmount);
+        _safeTransfer(tokenSale,msg.sender,buyAmount);
         
         if(tokenReceive == WETH){
             toPayable(creater).transfer(leftAmount);
@@ -310,7 +309,7 @@ contract trustPair is ItrustPair{
     }
     
     function updateParent(address _ply,address _parent) internal  returns(address _parentAddr){
-        require(_ply != _parentAddr,"ply can not equle parent");
+        require(_ply != _parent,"ply can not equals to parent");
         (uint256 parentid,address parentAddr) = relInter(relAddr).getParent(_ply);
         if(parentid == 0){
             uint256 pid = relInter(relAddr).getPlyPid(_parent);
@@ -353,6 +352,8 @@ contract trustFacotry{
     event AuctionCreated(address _sale, string  _name, address pair, uint length);
     
     constructor(address _feeTo,address _feeTo2) public{
+        require(_feeTo != address(0), "_feeTo zero address");
+        require(_feeTo2 != address(0), "_feeTo2 zero address");
         feeTo = _feeTo;
         feeTo2 = _feeTo2;
         feeSetter = msg.sender;
@@ -360,9 +361,10 @@ contract trustFacotry{
     
     function setRelAddr(address _relAddr) public{
         require(msg.sender == feeSetter,"only feeSetter");
+        require(_relAddr != address(0), "_relAddr zero address");
          relAddr = _relAddr;
     }
-    
+
     function createAuction(
                         string memory  _name,
                         address _Sale,
@@ -401,10 +403,12 @@ contract trustFacotry{
     
     function setFeeOne(address _feeTo) public{
         require(msg.sender == feeSetter,"only feeSetter");
+        require(_feeTo != address(0), "_feeTo zero address");
         feeTo = _feeTo;
     }
     function setFeeTwo(address _feeTo2) public{
         require(msg.sender == feeSetter,"only feeSetter");
+        require(_feeTo2 != address(0), "_feeTo2 zero address");
         feeTo2 = _feeTo2;
     }
     function getPairByID(uint256 _pID) public view returns(address){
